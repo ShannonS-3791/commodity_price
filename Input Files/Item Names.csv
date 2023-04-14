@@ -1,0 +1,124 @@
+"item_name","wb_item_code","imf_item_code"
+"Overall","INFERRED_OVERALL","PALLFNF"
+"Energy","iENERGY","PNRG"
+"Non-Energy","iNONFUEL","PNFUEL"
+"Coal","INFERRED_COAL","PCOAL"
+"Crude Oil","CRUDE_PETRO","POILAPSP"
+"Natural Gas","iNATGAS","PNGAS"
+"Propane",NA,"PPROPANE"
+"Coal, Australia","COAL_AUS","PCOALAU"
+"Coal, South Africa","COAL_SAFRICA","PCOALSA"
+"Crude Oil, Brent","CRUDE_BRENT","POILBRE"
+"Crude Oil, Dubai Fateh","CRUDE_DUBAI","POILDUB"
+"Crude Oil, WTI","CRUDE_WTI","POILWTI"
+"Natural Gas, EU","NGAS_US","PNGASEU"
+"Natural Gas, Japan","NGAS_EUR","PNGASJP"
+"Natural Gas, US","NGAS_JP","PNGASUS"
+"Agriculture","iAGRICULTURE","PAGRI"
+"Fertilizers","iFERTILIZERS","PFERT"
+"Food","iFOOD","PFOOD"
+"Beverages","iBEVERAGES","PBEVE"
+"Agricultural Raw Materials","iRAW_MATERIAL","PRAWM"
+"Cereals","iGRAINS","PCERE"
+"Oils and Meals","iFATS_OILS","PVOIL"
+"Other Food","iOTHERFOOD","INFERRED_OTHERFOOD"
+"Meat",NA,"PMEAT"
+"Seafood",NA,"PSEAF"
+"Rice","INFERRED_RICE","PRICENPQ"
+"Wheat","INFERRED_WHEAT","PWHEAMT"
+"Maize","INFERRED_MAIZE","PMAIZMT"
+"Barley","BARLEY","PBARL"
+"Rice (Thailand), 5% broken, white rice","RICE_05",NA
+"Rice (Thailand), 25% broken, white rice","RICE_25",NA
+"Rice (Thailand), 100% broken, A.1 Super","RICE_A1",NA
+"Rice (Vietnam), 5% broken, white rice","RICE_05_VNM",NA
+"Wheat (U.S.), no. 2, soft red winter","WHEAT_US_SRW",NA
+"Wheat (U.S.), no. 2 hard red winter","WHEAT_US_HRW",NA
+"Maize (U.S.), no. 2, yellow","MAIZE",NA
+"Sorghum","SORGHUM","PSORG"
+"Oats",NA,"POATS"
+"Soybeans","SOYBEANS","PSOYB"
+"Soybean Oil","SOYBEAN_OIL","PSOIL"
+"Soybean Meal","SOYBEAN_MEAL","PSMEA"
+"Palm Oil","PALM_OIL","PPOIL"
+"Coconut Oil","COCONUT_OIL","PCOIL"
+"Groundnts (Full)","INFERRED_GNUTS",NA
+"Groundnut Oil","GRNUT_OIL",NA
+"Groundnuts","GRNUT","PGNUTS"
+"Olive Oil",NA,"POLVOIL"
+"Rapeseed Oil","RAPESEED_OIL","PROIL"
+"Sunflower Seed Oil","SUNFLOWER_OIL","PSUNO"
+"Palm Kernal Oil","PLMKRNL_OIL",NA
+"Milk",NA,"PMILK"
+"Fishmeal","FISH_MEAL","PFSHMEAL"
+"Legumes (Chickpeas)",NA,"PCHANA"
+"Non-Citrus Fruit (Apple)",NA,"PAPPLE"
+"Vegetables (Tomato)",NA,"PTOMATO"
+"Sugar","INFERRED_SUGAR","PSUGA"
+"Bananas","INFERRED_BANANAS","PBANSOP"
+"Bananas, EU","BANANA_EU",NA
+"Bananas, US","BANANA_US",NA
+"Oranges","ORANGE","PORANG"
+"Beef","BEEF","PBEEF"
+"Chicken/Poultry","CHICKEN","PPOULT"
+"Lamb","LAMB","PLAMB"
+"Swine (Pork)",NA,"PPORK"
+"Shrimp","SHRIMP_MEX","PSHRI"
+"Fish",NA,"PSALM"
+"Sugar, World","SUGAR_WLD","PSUGAISA"
+"Sugar, US","SUGAR_US","PSUGAUSA"
+"Sugar, EU","SUGAR_EU",NA
+"Coffee","INFERRED_COFFEE","PCOFF"
+"Cocoa","COCOA","PCOCO"
+"Tea","TEA_AVG","PTEA"
+"Coffee, Arabic","COFFEE_ARABIC","PCOFFOTM"
+"Coffee, Robusta","COFFEE_ROBUS","PCOFFROB"
+"Tea, India","TEA_KOLKATA","PTEAINDIA"
+"Tea, Kenya","TEA_MOMBASA","PTEAMOM"
+"Tea, Sri Lanka","TEA_COLOMBO","PTEASL"
+"Timber","iTIMBER","PTIMB"
+"Other Raw Materials","iOTHERRAWMAT",NA
+"Cotton","COTTON_A_INDX","PCOTTIND"
+"Natural Rubber","INFERRED_RUBBER","PRUBB"
+"Rubber, TSR20","RUBBER_TSR20",NA
+"Rubber, RSS3","RUBBER1_MYSG",NA
+"Hides",NA,"PHIDE"
+"Wool",NA,"PWOOL"
+"Wool, Course",NA,"PWOOLC"
+"Wool, Fine",NA,"PWOOLF"
+"Logs","INFERRED_LOGS",NA
+"Sawnwood","INFERRED_SWOOD",NA
+"Logs, Cameroon","LOGS_CMR",NA
+"Logs, Malaysia","LOGS_MYS",NA
+"Sawnwood, Cameroon","SAWNWD_CMR",NA
+"Sawnwood, Malaysia","SAWNWD_MYS",NA
+"Plywood","PLYWOOD",NA
+"Hardwood Index",NA,"PHARD"
+"Softwood Index",NA,"PSOFT"
+"Hard Sawnwood",NA,"PSAWMAL"
+"Hard logs",NA,"PLOGSK"
+"Soft Sawnwood",NA,"PSAWORE"
+"Soft logs",NA,"PLOGORE"
+"Tobacco","TOBAC_US",NA
+"Metals and Minerals","iMETMIN","PALLMETA"
+"Precious Metals","iPRECIOUSMET","PPMETA"
+"Base Metals","iBASEMET","PMETA"
+"Iron Ore","IRON_ORE","PIORECR"
+"Aluminum","ALUMINUM","PALUM"
+"Cobalt",NA,"PCOBA"
+"Copper","COPPER","PCOPP"
+"Lead","LEAD","PLEAD"
+"Molybdenum",NA,"PLMMODY"
+"Nickel","NICKEL","PNICK"
+"Tin","Tin","PTIN"
+"Uranium",NA,"PURAN"
+"Zinc","Zinc","PZINC"
+"Natural Phosphate Rock","PHOSROCK",NA
+"Phosphate","DAP","PDAP"
+"Potassium","POTASH","PPOTASH"
+"Nitogenous","UREA_EE_BULK","PUREA"
+"TSP (triple superphosphate)","TSP",NA
+"Gold","GOLD","PGOLD"
+"Silver","SILVER","PSILVER"
+"Platinum","PLATINUM","PPLAT"
+"Palladium",NA,"PPALLA"
