@@ -308,6 +308,7 @@ The IMF data is downloaded via the IMF API for the Primary Commodity Price Syste
 #Download file from URL
 
 download.file("https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO-Historical-Data-Monthly.xlsx",sprintf("%sCMO-Historical-Data-Monthly.xlsx",folder_Raw))
+#may need to add option `mode = "wb"` in the download file command, if the file gets corrupted during download. Might happen on windows?
 
 #Import to R
 
