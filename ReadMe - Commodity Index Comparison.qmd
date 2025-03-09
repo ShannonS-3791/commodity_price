@@ -27,13 +27,14 @@ if(!require(readxl))install.packages("readxl")
 if(!require(writexl))install.packages("writexl")
 if(!require(openxlsx))install.packages("openxlsx")
 if(!require(data.table))install.packages("data.table")
+if(!require(lubridate))install.packages("lubridate")
 
 
 # Establish Parameters ++++++++++++++++++++++++++++++++++++++++++++++
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 date_start <- '1992'
-date_end <- '2023'
+date_end <- as.character(year(today()))
 
 prelim_cols <- c("source","commodity_name","unit","time_period","value")
 final_cols <- c(prelim_cols,"pct_change","value_2019index")
@@ -53,7 +54,20 @@ The input file is one that matches approximate commodities and indices across th
 
 ```{r names}
 
-itemName <- read.csv(sprintf('%sItem Names.csv',folder_Input)) %>%
+itemName_imp <- read.csv(sprintf('%sItem Names.csv',folder_Input))
+
+map_wb_Pnames <- itemName_imp %>%
+  select(item_name,import_name_wb, wb_item_code) %>%
+  filter(!is.na(import_name_wb))
+
+map_wb_Inames <- itemName_imp %>%
+  select(item_name,import_name_wb_index, wb_item_code) %>%
+  rename(import_name_wb = import_name_wb_index) %>%
+  filter(!is.na(import_name_wb))
+
+
+itemName <- itemName_imp %>%
+  select(-c(import_name_wb,import_name_wb_index)) %>%
   pivot_longer(cols = -item_name,
                names_to = "source",
                values_to = "Item_Code") %>%
@@ -63,7 +77,7 @@ itemName <- read.csv(sprintf('%sItem Names.csv',folder_Input)) %>%
 write_xlsx(itemName,sprintf('%sItem Names and Info.xlsx',folder_Final))
 ```
 
-## Parent-Child Mapping Tables 
+## Parent-Child Mapping Tables
 
 Create full table of all relations and levels using simple table. The input table lists each commodity, its immediate parent, and weight within parent index. Our goal is to create a table that iteratively builds out this information so that a commodity or index can be selected and the user will see (in Tableau) all of the corresponding indices / commodities that make up the index to to which the commodity / index contributes.
 
@@ -306,15 +320,13 @@ The IMF data is downloaded via the IMF API for the Primary Commodity Price Syste
 ```{r getData_WB}
 
 #Download file from URL
+runWB_API <- FALSE
+
+if (runWB_API){
 
 download.file("https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO-Historical-Data-Monthly.xlsx",sprintf("%sCMO-Historical-Data-Monthly.xlsx",folder_Raw))
-#may need to add option `mode = "wb"` in the download file command, if the file gets corrupted during download. Might happen on windows?
-
-#Import to R
-
-wb_P01 <- read_excel(sprintf("%sCMO-Historical-Data-Monthly.xlsx",folder_Raw),sheet = "Monthly Prices") 
-wb_I01 <- read_excel(sprintf("%sCMO-Historical-Data-Monthly.xlsx",folder_Raw),sheet = "Monthly Indices") %>%
-  rename(`...1` = 1)
+  
+}
 
 ```
 
@@ -323,7 +335,7 @@ wb_I01 <- read_excel(sprintf("%sCMO-Historical-Data-Monthly.xlsx",folder_Raw),sh
 ```{r getData_IMF}
 
 # Update this to TRUE/FALSE based on if you want to pull from the API again
-runIMF_API <- TRUE
+runIMF_API <- FALSE
 
 if (runIMF_API){
 #Paths assume that we also have imf-data-api-pull-r repository that is saved in the same parent folder as this current repo. If not, adjust path accordingly.
@@ -333,15 +345,14 @@ imf_path <- (sprintf("%s/imf-data-api-pull-r/", my_path))
 # Run IMF API Functions folder, which will save the functions for use
 source(sprintf("%sIMF API Functions.R", imf_path))
 
-#Create Table that just has PCPS as the Dataset ID
+#Create Table that just has PCPS as the Database ID
 imf_ds_list <- "PCPS"
 
 #Get Dataset Name from Function
 imf_datasets   <- getIMF_dsInfo() %>% # Call dsInfo function
   
-  ## Filter to only relevant Datasets
+  ## Filter to only relevant Databases
     subset(dataset_id %in% imf_ds_list)
-
 
 
 #Get all Metadata for this Dataset
@@ -351,7 +362,7 @@ imf_metadata <- getIMF_MetaData(imf_ds_list)
 imf_comm_indicators <- imf_metadata %>%
   subset(metadata_type == "COMMODITY") %>%
   distinct(ds_code,attr_code) %>%
-  rename(dataset_id = ds_code,
+  rename(database_id = ds_code,
          indicator_code = attr_code)
 
 #Run function to get all PCPS data.
@@ -365,7 +376,7 @@ imf_comm_indicators <- imf_metadata %>%
   for (i in rownames(imf_comm_indicators)) {
 
     ### Set Dataset and Indicator ----
-    ds_code <- as.character(imf_comm_indicators[i,"dataset_id"])
+    ds_code <- as.character(imf_comm_indicators[i,"database_id"])
     indic_code <- as.character(imf_comm_indicators[i,"indicator_code"])
   
     ## Pull respective data from the dataset, but indicator and ISO
@@ -393,39 +404,53 @@ write.csv(imf_metadata,str_c(folder_Raw, "IMF_PCPS_Metadata.csv"),
 
 ```
 
-## Processing
+## Clean and Finalize Datasets
 
 ### World Bank
 
-```{r proc_wb}
+```{r procData_WB}
+
+# Read in Raw Data from Price and Index sheets
+wb_P01 <- read_excel(sprintf("%sCMO-Historical-Data-Monthly.xlsx",folder_Raw),sheet = "Monthly Prices") 
+wb_I01 <- read_excel(sprintf("%sCMO-Historical-Data-Monthly.xlsx",folder_Raw),sheet = "Monthly Indices") %>%
+  rename(`...1` = 1)
 
 wb_P02 <- wb_P01 %>% row_to_names(row_number = 4) %>%
   rename("time_period" = 1)
 
+# Pivot headers and join with mapping
+pink_sheet_cMap <- wb_P02[1,-c(1)] %>%
+  #mutate(type = ifelse(row_number() == 1,"unit","commodity_code")) %>%
+  pivot_longer(cols = everything(),
+               names_to = "import_name_wb",
+               values_to = "unit")  %>%
+  mutate(unit = ifelse(unit == "(2010=100)",
+                       "Index (2010=100)",gsub("\\(|\\)","",
+                                               as.character(unit)))) %>%
+  full_join(map_wb_Pnames, by = "import_name_wb") 
 
-pink_sheet_cMap <- wb_P02[1:2,-c(1)] %>%
-  mutate(type = ifelse(row_number() == 1,"unit","commodity_code")) %>%
-  pivot_longer(cols = -type,
-               names_to = "commodity_name",
-               values_to = "step1") %>%
-  pivot_wider(id_cols = "commodity_name",
-              names_from = "type",
-              values_from = "step1") %>%
-  mutate(unit = ifelse(unit == "(2010=100)","Index (2010=100)",gsub("\\(|\\)","",as.character(unit))))
 
-wb_P03 <- wb_P02[-c(1,2),] %>%
+# Check there are no extras
+chk_PwbHeaders <- pink_sheet_cMap %>%
+  filter(is.na(import_name_wb) | is.na(wb_item_code))
+
+
+
+wb_P03 <- wb_P02[-c(1),] %>%
   mutate(year = as.numeric(substr(time_period,1,4))) %>%
   subset(year >= date_start) %>%
   select(-year) %>%
   pivot_longer(cols = -time_period,
-               names_to = "commodity_name",
+               names_to = "import_name_wb",
                values_to = "value") %>%
-  left_join(pink_sheet_cMap, by = "commodity_name")
+  left_join(pink_sheet_cMap, by = "import_name_wb") %>%
+  select(commodity_name = item_name, wb_item_code, time_period,
+         value, unit)
   
 
 ####Headers are in different rows --> create and process table of just headers
 
-pink_sheet_iMap1 <- wb_I01[5:8,] %>%
+pink_sheet_iMap <- wb_I01[5:8,] %>%
   pivot_longer(cols = everything(),
                names_to = "row",
                values_to = "header") %>% 
@@ -435,13 +460,9 @@ pink_sheet_iMap1 <- wb_I01[5:8,] %>%
   pivot_wider(names_from = "row", values_from = "header") %>%
   add_column(`...1` = "time_period", .before = 1)
 
-wb_I02 <- rbind(pink_sheet_iMap1, wb_I01[-(1:8),]) %>% #Run this only to check names
+wb_I02 <- rbind(pink_sheet_iMap, wb_I01[-(1:8),]) %>% #Run this only to check names
   row_to_names(row_number = 1) 
 
-pink_sheet_iMap2 <- wb_I02[1,-c(1)] %>%
-  pivot_longer(cols = everything(),
-               names_to = "commodity_name",
-               values_to = "commodity_code")
   
 
 wb_I03 <- wb_I02 %>%
@@ -449,20 +470,30 @@ wb_I03 <- wb_I02 %>%
   subset(year >= date_start) %>% drop_na(time_period) %>% 
   select(-year) %>%
   pivot_longer(cols = -time_period,
-               names_to = "commodity_name",
+               names_to = "import_name_wb",
                values_to = "value") %>%
   mutate(unit = "Index (2010 = 100)") %>%
-  left_join(pink_sheet_iMap2, by = "commodity_name")
+  left_join(map_wb_Inames, by = "import_name_wb")
 
-wb01 <- rbind(wb_P03,wb_I03) %>%
+chk_IwbHeaders <- wb_I03 %>%
+  distinct(import_name_wb,wb_item_code) %>%
+  filter(is.na(import_name_wb) | is.na(wb_item_code))
+
+wb_I04 <- wb_I03 %>%
+  select(commodity_name = item_name, wb_item_code, time_period,
+         value, unit)
+
+wb01 <- rbind(wb_P03,wb_I04) %>%
   arrange(commodity_name, time_period) %>%
-  mutate(value = ifelse(value == "0", NA, as.numeric(value))) %>%
+  mutate(value = ifelse(value == "0" | value == "...", NA,
+                        as.numeric(value))) %>%
+  rename(commodity_code = wb_item_code) %>%
   mutate(source = "WB",
          source_full = "World Bank: Commodity Prices (Pink Sheet)",
          commodity_definition = "")
   
 
-### Calculate % Change and Index 
+### Calculate % Change and Index -----------------------------------------------
 #### Each calculation is run from the same data table, then joined.
 #.     This is to avoid problems with sum / mean / etc & grouping when running the calculations.
 #.     Joins should work automatically since most columns are the same name.
@@ -476,16 +507,14 @@ wb_final <- wb03a %>%
   left_join(wb03c)
 
 
-rm(wb_I01,wb_I02,wb_I03,wb_P01,wb_P02,wb_P03,wb01,wb03a,wb03b,wb03c)
-rm(pink_sheet_cMap,pink_sheet_iMap1,pink_sheet_iMap2)
+rm(wb_I01,wb_I02,wb_I03,wb_I04,
+   wb_P01,wb_P02,wb_P03,wb01,wb02,wb03a,wb03b,wb03c)
+rm(pink_sheet_cMap,pink_sheet_iMap)
 ```
 
 ### IMF
 
-```{r proc_imf}
-
-## Remove Extra Columns, join DB Names ++++++++++++++++++++++++++++++
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+```{r procData_IMF}
 
 imf01 <- imf_data %>%
   select(-c("rownum","UNIT_MULT","TIME_FORMAT","REF_AREA")) %>%
@@ -583,7 +612,7 @@ imf_pctA <- imf01 %>%
   select(COMMODITY,time_period,IMFpctchg = value)
 
 
-### Calculate % Change and Index -----------------------------------------------
+### Calculate % Change and Index ++++++++++++++++++++++++++++++++++++++++++++++
 #### Each calculation is run from the same data table, then joined.
 #.     This is to avoid problems with sum / mean / etc & grouping when running the calculations.
 #.     Joins should work automatically since most columns are the same name.
@@ -595,11 +624,23 @@ imf03c  <- calc_YYYY_Base(imf02, 2016)
 imf_final <- imf03a %>%
   left_join(imf03b)%>%
   left_join(imf03c)
+
+chk_pctA <- imf_final %>%
+  select(commodity_code,time_period,value,pct_change) %>%
+  left_join(imf_pctA, by=c("commodity_code" = "COMMODITY","time_period" = "time_period")) %>%
+  mutate(pct_chg_chk = ((round(pct_change,2) - round(IMFpctchg,2))/round(pct_change,2)) < .01 ) %>%
+  filter(pct_chg_chk == FALSE)
+  
+
+rm(DB_table,imf_datasets,imf_metadata,imf_comm_indicators)
+rm(avail_FREQ,imf01,imf02,imf03a,imf03b,imf03c)
+rm(chk_pctA,imf_pctA)
 ```
 
-## Combine World Bank and IMF Data
+### Combine
 
-```{r combine_wb_imf}
+```{r procData_Combine}
+
 commodity_prices01 <- rbind(imf_final,wb_final)
 
  
@@ -610,14 +651,13 @@ commodity_prices01 <- rbind(imf_final,wb_final)
 
  write.csv(commodity_prices_final,sprintf("%sCommodity Prices.csv",folder_Final), 
            row.names = FALSE, na="")
-```
+ 
+ 
 
-## Compile Metadata
+## Create Metadata Table  +++++++++++++++++++++++++++++++++++++++++++
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-```{r full_metadata}
-
-
-### Commodity Metadata goes to sheet with names, indices, etc.
+ ### Commodity Metadata goes to sheet with names, indices, etc.
  wb_definitions <- read.csv(sprintf("%sWB Definitions Map.csv",folder_Input))
  
  # These are inferred commodities (not present in data)
@@ -650,4 +690,5 @@ commodity_prices01 <- rbind(imf_final,wb_final)
  
  write.csv(commodity_info,sprintf("%sCommodity Metadata.csv",folder_Final), 
            row.names = FALSE, na="")
+
 ```
